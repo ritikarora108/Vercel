@@ -8,7 +8,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { configDotenv } from "dotenv"
 configDotenv();
 
-
+console.log("🌐 Initializing S3 client for Cloudflare R2 (upload service)...");
 const s3Client = new S3Client({
     region: "auto",
     endpoint: process.env.ENDPOINT!,
@@ -18,9 +18,14 @@ const s3Client = new S3Client({
     }
 
 })
+console.log("✅ S3 client initialized successfully (upload service)");
 
 export const uploadFile = async (fileName: string, localFilePath: string) => {
+    console.log(`📤 Starting upload for file: ${fileName}`);
+    console.log(`📂 Local file path: ${localFilePath}`);
+    
     try {
+        console.log(`📖 Reading file content: ${localFilePath}`);
         const fileContent = await new Promise<Buffer>((resolve, reject) => {
             fs.readFile(localFilePath, (err, content) => {
                 if (err) reject(err);
@@ -28,7 +33,8 @@ export const uploadFile = async (fileName: string, localFilePath: string) => {
             })
         })
 
-        
+        console.log(`📊 File size: ${fileContent.length} bytes`);
+        console.log(`🚀 Uploading to S3 bucket 'vercel' with key: ${fileName}`);
         
         await s3Client.send(new PutObjectCommand({
             Body: fileContent,
@@ -36,8 +42,9 @@ export const uploadFile = async (fileName: string, localFilePath: string) => {
             Key: fileName
         }));
 
+        console.log(`✅ Successfully uploaded: ${fileName}`);
 
     } catch (error) {
-        console.log(error);
+        console.error(`❌ Error uploading ${fileName}:`, error);
     }
 }
