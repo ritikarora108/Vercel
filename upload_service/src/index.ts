@@ -8,12 +8,14 @@ import simpleGit from "simple-git"
 import path from "path";
 import { getAllFiles } from "./file";
 import { uploadFile } from "./cloudflare"
-import { createClient } from "redis";
+import { createClient, RedisArgument } from "redis";
 
-console.log("🔌 Connecting to Redis publisher...");
+console.log("🔌 Connecting to Redis...");
 const publisher = createClient();
 publisher.connect();
-console.log("✅ Redis publisher connected");
+const subscriber = createClient();
+subscriber.connect();
+console.log("✅ Connected to Redis...");
 
 const app = express();
 app.use(cors());
@@ -52,9 +54,23 @@ app.post('/deploy', async (req: Request, res: Response) => {
     console.log(`📨 Adding build request to queue for ID: ${id}`);
     publisher.lPush('build-queue', id);
     console.log(`✅ Build request queued for ID: ${id}`);
+    publisher.hSet("status",id, 'uploaded');
+    console.log(`Status ${id}: uploaded`);
 
     console.log(`🎉 Deployment request completed for ID: ${id}`);
     res.json({ id });
+})
+
+
+app.get('/status', async (req, res) => {
+    const id = req.query.id;
+    console.log(id);
+    const status = await subscriber.hGet('status', id as RedisArgument);
+    res.json({
+        status
+    })
+
+ 
 })
 
 app.listen(3000, () => {
