@@ -6,8 +6,10 @@ import path from "path"
 
 
 const subscriber = createClient();
+const publisher = createClient();
 console.log("🔌 Connecting to Redis...");
 subscriber.connect();
+publisher.connect();
 console.log("✅ Redis connection established");
 
 async function main() {
@@ -40,6 +42,7 @@ async function main() {
             console.log(`📤 Uploading: ${keyFilePath}`);
             await uploadFile(keyFilePath, filePath);
         }
+        publisher.hSet('status', id, 'deployed');
         console.log(`🎉 Deployment completed successfully for ID: ${id}`);
         console.log("=".repeat(50));
     }
